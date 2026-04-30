@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ordine — Feetnessimo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0a0d; --card: #1a1018; --border: #2e1e2a;
+      --accent: #f472b6; --accent-dim: rgba(244,114,182,0.1);
+      --text: #f5eef2; --muted: #9a7a8e; --input-bg: #221520;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; padding: 40px 16px 80px; }
+    body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(244,114,182,0.13) 0%, transparent 70%); }
+    .wrap { position:relative; z-index:1; max-width:580px; margin:0 auto; }
+    header { text-align:center; margin-bottom:44px; animation: fadeDown 0.6s ease both; }
+    .logo { font-family:'Bebas Neue',sans-serif; font-size:clamp(52px,14vw,88px); letter-spacing:5px; line-height:1; background:linear-gradient(135deg,#f472b6 0%,#fb923c 55%,#f472b6 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    header p { color:var(--muted); font-size:12px; letter-spacing:3px; text-transform:uppercase; margin-top:10px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:28px 24px; margin-bottom:16px; animation: fadeUp 0.5s ease both; }
+    .card:nth-child(2){animation-delay:.08s} .card:nth-child(3){animation-delay:.16s} .card:nth-child(4){animation-delay:.24s} .card:nth-child(5){animation-delay:.32s}
+    .section-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; color:var(--accent); margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+    .section-title::after { content:''; flex:1; height:1px; background:linear-gradient(to right,var(--border),transparent); }
+    .product-list { display:flex; flex-direction:column; gap:9px; }
+    .product-item { background:var(--input-bg); border:1px solid var(--border); border-radius:12px; padding:13px 14px; display:flex; align-items:center; gap:12px; cursor:pointer; transition:border-color 0.2s,background 0.2s; user-select:none; }
+    .product-item:hover { border-color:rgba(244,114,182,0.35); }
+    .product-item.selected { border-color:var(--accent); background:rgba(244,114,182,0.07); }
+    .product-check { width:20px; height:20px; flex-shrink:0; border:2px solid var(--border); border-radius:6px; display:flex; align-items:center; justify-content:center; transition:all 0.2s; font-size:11px; color:#0f0a0d; }
+    .product-item.selected .product-check { background:var(--accent); border-color:var(--accent); }
+    .product-info { flex:1; min-width:0; }
+    .product-name { font-size:13px; font-weight:500; color:var(--text); line-height:1.3; }
+    .product-price { font-size:12px; color:var(--accent); margin-top:2px; }
+    .qty-controls { display:flex; align-items:center; gap:7px; opacity:0; pointer-events:none; transition:opacity 0.2s; flex-shrink:0; }
+    .product-item.selected .qty-controls { opacity:1; pointer-events:all; }
+    .qty-btn { width:26px; height:26px; background:var(--border); border:none; border-radius:7px; color:var(--text); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s; }
+    .qty-btn:hover { background:var(--accent); color:#0f0a0d; }
+    .qty-num { font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--text); min-width:18px; text-align:center; }
+
+    /* Cart summary */
+    .cart-summary { margin-top:16px; background:var(--accent-dim); border:1px solid rgba(244,114,182,0.2); border-radius:12px; padding:14px 16px; display:none; }
+    .cart-summary.show { display:block; }
+    .cart-title { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+    .cart-line { display:flex; justify-content:space-between; font-size:13px; color:var(--text); margin-bottom:6px; flex-wrap:wrap; gap:4px; }
+    .qty-badge { background:var(--accent); color:#0f0a0d; font-size:10px; font-weight:600; border-radius:4px; padding:1px 5px; margin-right:5px; }
+    .cart-divider { height:1px; background:rgba(244,114,182,0.2); margin:10px 0; }
+    .cart-total { display:flex; justify-content:space-between; align-items:center; }
+    .cart-total .label { font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+    .cart-total .amount { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--accent); letter-spacing:1px; }
+    .price-note { font-size:11px; color:var(--muted); margin-top:6px; font-style:italic; }
+
+    .field { margin-bottom:16px; }
+    label { display:block; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:7px; font-weight:500; }
+    input, textarea { width:100%; background:var(--input-bg); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:15px; padding:11px 15px; outline:none; transition:border-color 0.2s,box-shadow 0.2s; }
+    input:focus, textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(244,114,182,0.1); }
+    input::placeholder, textarea::placeholder { color:var(--muted); font-style:italic; }
+    textarea { resize:vertical; min-height:85px; }
+    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+    /* Payment */
+    .payment-options { display:flex; flex-direction:column; gap:9px; }
+    .payment-option { background:var(--input-bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:14px; cursor:pointer; transition:border-color 0.2s,background 0.2s; user-select:none; }
+    .payment-option:hover { border-color:rgba(244,114,182,0.35); }
+    .payment-option.selected { border-color:var(--accent); background:rgba(244,114,182,0.07); }
+    .payment-radio { width:18px; height:18px; flex-shrink:0; border:2px solid var(--border); border-radius:50%; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+    .payment-option.selected .payment-radio { border-color:var(--accent); }
+    .payment-radio::after { content:''; width:8px; height:8px; border-radius:50%; background:var(--accent); transform:scale(0); transition:transform 0.2s; }
+    .payment-option.selected .payment-radio::after { transform:scale(1); }
+    .payment-info { flex:1; }
+    .payment-name { font-size:14px; font-weight:500; color:var(--text); }
+    .payment-desc { font-size:12px; color:var(--muted); margin-top:2px; }
+    .payment-icon { font-size:22px; }
+    #bonificoInfo { margin-top:12px; display:none; }
+    #bonificoInfo.show { display:block; }
+    .info-box { background:rgba(244,114,182,0.06); border:1px solid rgba(244,114,182,0.2); border-radius:10px; padding:12px 14px; font-size:12px; color:var(--muted); line-height:1.7; }
+    .info-box strong { color:var(--accent); }
+
+    /* Privacy */
+    .privacy-box { background:#130e17; border:1px solid var(--border); border-radius:12px; padding:15px 16px; display:flex; align-items:flex-start; gap:13px; cursor:pointer; transition:border-color 0.2s,background 0.2s; }
+    .privacy-box.active { border-color:var(--accent); background:rgba(244,114,182,0.06); }
+    .privacy-box input[type="checkbox"] { width:18px; height:18px; flex-shrink:0; accent-color:var(--accent); cursor:pointer; margin-top:2px; }
+    .privacy-box .priv-text strong { font-size:13px; font-weight:500; color:var(--accent); display:block; margin-bottom:3px; }
+    .privacy-box .priv-text span { font-size:12px; color:var(--muted); line-height:1.5; }
+    #address-fields { margin-top:16px; display:none; }
+    #address-fields.show { display:block; }
+
+    .btn { width:100%; background:linear-gradient(135deg,#f472b6,#ec4899); color:#fff; font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:4px; border:none; border-radius:14px; padding:20px; cursor:pointer; transition:transform 0.15s,box-shadow 0.2s; box-shadow:0 8px 32px rgba(244,114,182,0.25); margin-top:8px; }
+    .btn:hover { transform:translateY(-2px); box-shadow:0 14px 40px rgba(244,114,182,0.35); }
+    .btn:active { transform:translateY(0); }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+    .footer-note { text-align:center; color:var(--muted); font-size:12px; margin-top:20px; line-height:1.8; }
+    .footer-note a { color:var(--accent); text-decoration:none; }
+    #success { display:none; text-align:center; padding:70px 20px; animation: fadeUp 0.5s ease both; }
+    #success .icon { font-size:60px; margin-bottom:16px; }
+    #success h2 { font-family:'Bebas Neue',sans-serif; font-size:42px; letter-spacing:4px; background:linear-gradient(135deg,#f472b6,#fb923c); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:12px; }
+    #success p { color:var(--muted); font-size:14px; line-height:1.8; }
+    #success a { color:var(--accent); text-decoration:none; font-size:14px; }
+    @keyframes fadeDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeUp   { from{opacity:0;transform:translateY(24px)}  to{opacity:1;transform:translateY(0)} }
+    @media(max-width:480px){ .card{padding:20px 16px} .row2{grid-template-columns:1fr} .product-name{font-size:12px} }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">Feetnessimo</div>
+    <p>Form d'ordine ufficiale</p>
+  </header>
+
+  <form id="orderForm">
+    <div class="card">
+      <div class="section-title">🛍 Scegli i prodotti</div>
+      <div class="product-list" id="productList"></div>
+      <div class="cart-summary" id="cartSummary">
+        <div class="cart-title">🛒 Riepilogo ordine</div>
+        <div id="cartLines"></div>
+        <div class="cart-divider"></div>
+        <div class="cart-total">
+          <span class="label">Subtotale</span>
+          <span class="amount" id="cartTotal">0€</span>
+        </div>
+        <div class="price-note" id="priceNote"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">✍️ Personalizzazioni</div>
+      <div class="field">
+        <label>Richieste speciali o note</label>
+        <textarea name="note" placeholder="Es. nome su calzini, numero allenamenti extra, dedica…"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">👤 I tuoi dati</div>
+      <div class="field">
+        <label>Nome / Nickname *</label>
+        <input type="text" name="nome" placeholder="Come vuoi essere chiamato/a" required />
+      </div>
+      <div class="field">
+        <label>Username Telegram *</label>
+        <input type="text" name="telegram" placeholder="@username" required />
+      </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">💳 Pagamento</div>
+      <div class="payment-options">
+        <div class="payment-option" data-value="PayPal" onclick="selectPayment(this)">
+          <div class="payment-icon">🅿️</div>
+          <div class="payment-info">
+            <div class="payment-name">PayPal</div>
+            <div class="payment-desc">Pagamento sicuro — ti invio il link dopo l'ordine</div>
+          </div>
+          <div class="payment-radio"></div>
+        </div>
+        <div class="payment-option" data-value="Revolut" onclick="selectPayment(this)">
+          <div class="payment-icon">💜</div>
+          <div class="payment-info">
+            <div class="payment-name">Revolut</div>
+            <div class="payment-desc">Trasferimento istantaneo tra privati</div>
+          </div>
+          <div class="payment-radio"></div>
+        </div>
+        <div class="payment-option" data-value="Bonifico bancario" onclick="selectPayment(this)">
+          <div class="payment-icon">🏦</div>
+          <div class="payment-info">
+            <div class="payment-name">Bonifico bancario</div>
+            <div class="payment-desc">Ti invio l'IBAN in privato su Telegram</div>
+          </div>
+          <div class="payment-radio"></div>
+        </div>
+      </div>
+      <div id="bonificoInfo">
+        <div class="info-box">
+          💡 <strong>Nota sul bonifico:</strong> ti invierò i dati bancari direttamente su Telegram dopo aver ricevuto l'ordine. La spedizione avviene dopo la conferma del pagamento.
+        </div>
+      </div>
+      <input type="hidden" name="pagamento" id="pagamento_hidden" />
+    </div>
+
+    <div class="card">
+      <div class="section-title">📦 Spedizione</div>
+      <div class="field">
+        <label>Nome destinatario *</label>
+        <input type="text" name="dest_nome" placeholder="Nome e Cognome" required />
+      </div>
+      <div class="field">
+        <label>Indirizzo *</label>
+        <input type="text" name="indirizzo" placeholder="Via, numero civico" required />
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>CAP *</label>
+          <input type="text" name="cap" placeholder="00000" inputmode="numeric" required />
+        </div>
+        <div class="field">
+          <label>Città *</label>
+          <input type="text" name="citta" placeholder="Città" required />
+        </div>
+      </div>
+      <div class="field">
+        <label>Provincia</label>
+        <input type="text" name="provincia" placeholder="Es. MI" maxlength="2" />
+      </div>
+      <div class="field">
+        <label>Note corriere</label>
+        <input type="text" name="note_corriere" placeholder="Es. citofono, orari preferiti…" />
+      </div>
+    </div>
+
+    <input type="hidden" name="prodotti_ordinati" id="prodotti_hidden" />
+    <input type="hidden" name="subtotale" id="subtotale_hidden" />
+
+    <button type="submit" class="btn" id="submitBtn">INVIA ORDINE →</button>
+    <p class="footer-note">
+      Riceverai conferma direttamente su Telegram.<br/>
+      Per info: <a href="https://t.me/feetnessimo" target="_blank">@feetnessimo</a>
+    </p>
+  </form>
+
+  <div id="success">
+    <div class="icon">🌸</div>
+    <h2>Ordine inviato!</h2>
+    <p>Ti contatterò su Telegram al più presto.<br/>Grazie per il tuo ordine 🖤</p>
+    <br/>
+    <a href="https://t.me/feetnessimo" target="_blank">→ Vai su Telegram</a>
+  </div>
+</div>
+
+<script>
+  // price: null = range (show note), -1 = variable (show note)
+  const products = [
+    { id:1,  emoji:"🧦", name:"Calzini singolo allenamento",       priceLabel:"20€",         price:20 },
+    { id:2,  emoji:"🧦", name:"Calzini multi-allenamento",         priceLabel:"15€ (+2€/allenamento extra)", price:15, note:true },
+    { id:3,  emoji:"✍️", name:"Calzini personalizzati",            priceLabel:"30–50€",      price:30, range:true },
+    { id:4,  emoji:"👟", name:"Scarpe sportive usate",             priceLabel:"60€",         price:60 },
+    { id:5,  emoji:"🦶", name:"Soletta usata",                     priceLabel:"30€",         price:30 },
+    { id:6,  emoji:"🎾", name:"Pallina massaggio usata",           priceLabel:"15€",         price:15 },
+    { id:7,  emoji:"🎾", name:"Pallina massaggio + video",         priceLabel:"40€",         price:40 },
+    { id:8,  emoji:"🎥", name:"Video riscaldamento con calzini",   priceLabel:"70€",         price:70 },
+    { id:9,  emoji:"🎥", name:"Video riscaldamento senza calzini", priceLabel:"100€",        price:100 },
+    { id:10, emoji:"🦶", name:"Cavigliera + video",                priceLabel:"60€",         price:60 },
+    { id:11, emoji:"🧱", name:"Calco piede",                        priceLabel:"150€",         price:150 },
+    { id:12, emoji:"🎁", name:"Mystery Box (3 prodotti + video)",  priceLabel:"150–300€",    price:150, range:true },
+  ];
+
+  const quantities = {};
+  const selected = new Set();
+
+  function buildList() {
+    const list = document.getElementById('productList');
+    products.forEach(p => {
+      quantities[p.id] = 1;
+      const item = document.createElement('div');
+      item.className = 'product-item';
+      item.id = `item-${p.id}`;
+      item.innerHTML = `
+        <div class="product-check" id="check-${p.id}"></div>
+        <div class="product-info">
+          <div class="product-name">${p.emoji} ${p.name}</div>
+          <div class="product-price">${p.priceLabel}</div>
+        </div>
+        <div class="qty-controls" id="qty-${p.id}">
+          <button type="button" class="qty-btn" data-id="${p.id}" data-delta="-1">−</button>
+          <div class="qty-num" id="qnum-${p.id}">1</div>
+          <button type="button" class="qty-btn" data-id="${p.id}" data-delta="1">+</button>
+        </div>
+      `;
+      item.addEventListener('click', () => toggleProduct(p.id));
+      list.appendChild(item);
+    });
+    document.querySelectorAll('.qty-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = parseInt(btn.dataset.id);
+        const delta = parseInt(btn.dataset.delta);
+        quantities[id] = Math.max(1, (quantities[id] || 1) + delta);
+        document.getElementById(`qnum-${id}`).textContent = quantities[id];
+        updateCart();
+      });
+    });
+  }
+
+  function toggleProduct(id) {
+    const item = document.getElementById(`item-${id}`);
+    const check = document.getElementById(`check-${id}`);
+    if (selected.has(id)) {
+      selected.delete(id);
+      item.classList.remove('selected');
+      check.textContent = '';
+    } else {
+      selected.add(id);
+      item.classList.add('selected');
+      check.textContent = '✓';
+    }
+    updateCart();
+  }
+
+  function updateCart() {
+    const summary = document.getElementById('cartSummary');
+    const lines = document.getElementById('cartLines');
+    if (selected.size === 0) { summary.classList.remove('show'); return; }
+    summary.classList.add('show');
+    lines.innerHTML = '';
+    const parts = [];
+    let total = 0;
+    let hasRange = false;
+    let hasNote = false;
+
+    selected.forEach(id => {
+      const p = products.find(x => x.id === id);
+      const qty = quantities[id];
+      const lineTotal = p.price * qty;
+      total += lineTotal;
+      if (p.range) hasRange = true;
+      if (p.note) hasNote = true;
+
+      const line = document.createElement('div');
+      line.className = 'cart-line';
+      line.innerHTML = `
+        <span><span class="qty-badge">×${qty}</span>${p.emoji} ${p.name}</span>
+        <span style="color:var(--muted);font-size:12px">${p.range ? p.priceLabel : lineTotal + '€'}</span>
+      `;
+      lines.appendChild(line);
+      parts.push(`${p.emoji} ${p.name} ×${qty} — ${p.priceLabel}`);
+    });
+
+    const totalEl = document.getElementById('cartTotal');
+    const noteEl = document.getElementById('priceNote');
+    totalEl.textContent = hasRange ? `da ${total}€` : `${total}€`;
+    document.getElementById('prodotti_hidden').value = parts.join(' | ');
+    document.getElementById('subtotale_hidden').value = hasRange ? `da ${total}€` : `${total}€`;
+
+    const notes = [];
+    if (hasRange) notes.push('* I prezzi con range verranno concordati su Telegram');
+    if (hasNote) notes.push('* Gli allenamenti extra del multi-allenamento verranno concordati');
+    noteEl.textContent = notes.join(' — ');
+  }
+
+  function selectPayment(el) {
+    document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    const val = el.dataset.value;
+    document.getElementById('pagamento_hidden').value = val;
+    document.getElementById('bonificoInfo').classList.toggle('show', val === 'Bonifico bancario');
+  }
+
+  document.getElementById('orderForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    if (selected.size === 0) { alert('Seleziona almeno un prodotto! 🌸'); return; }
+    if (!document.getElementById('pagamento_hidden').value) { alert('Seleziona un metodo di pagamento! 💳'); return; }
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Invio in corso…';
+    const data = new FormData(e.target);
+    if (!data.get('spedizione_privata')) data.set('spedizione_privata', 'No');
+    try {
+      const res = await fetch('https://formspree.io/f/mdabnzon', {
+        method: 'POST', body: data, headers: { Accept: 'application/json' }
+      });
+      if (res.ok) {
+        document.getElementById('orderForm').style.display = 'none';
+        document.getElementById('success').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const json = await res.json().catch(() => ({}));
+        alert('Errore: ' + (json.error || 'Riprova o scrivimi su Telegram: @feetnessimo'));
+        btn.disabled = false; btn.textContent = 'INVIA ORDINE →';
+      }
+    } catch {
+      alert('Errore di rete. Scrivimi su Telegram: @feetnessimo');
+      btn.disabled = false; btn.textContent = 'INVIA ORDINE →';
+    }
+  });
+
+  buildList();
+</script>
+</body>
+</html>
